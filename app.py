@@ -44,8 +44,37 @@ def netoff_profit():
         })
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+# ----------------------------------------------------
+# 💡 駿河屋専用の利益判定API（追加分）
+# ----------------------------------------------------
+@app.route('/api/surugaya/profit', methods=['GET'])
+def surugaya_profit():
+    isbn = request.args.get('isbn')
+    buy_price = request.args.get('buy_price', type=int)
 
+    if not isbn or buy_price is None:
+         return jsonify({"status": "error", "message": "データ不足"}), 400
+
+    try:
+        # ※現在はテスト用のダミー計算（仕入値+2000円）
+        amazon_price = buy_price + 2000 
+        fee = int(amazon_price * 0.15)
+        profit = amazon_price - buy_price - fee
+        
+        # 駿河屋は送料等も考慮し、利益800円以上を合格とする例
+        is_target = profit >= 800
+
+        return jsonify({
+            "status": "success",
+            "is_target": is_target,
+            "profit": profit,
+            "amazon_price": amazon_price,
+            "buy_price": buy_price
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 if __name__ == "__main__":
     # Renderの環境変数 PORT を読み込む
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
+
