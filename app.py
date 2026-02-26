@@ -3,13 +3,12 @@ from flask_cors import CORS
 import os
 
 app = Flask(__name__)
-CORS(app)
+CORS(app) # 外部（ブラウザ）からの通信を許可
 
 @app.route('/')
 def index():
     return "Amazon Research API is running!"
 
-# 💡 共通利益判定窓口
 @app.route('/api/profit', methods=['GET'])
 def calculate_profit():
     isbn = request.args.get('isbn')
@@ -19,23 +18,21 @@ def calculate_profit():
          return jsonify({"status": "error", "message": "Data Missing"}), 400
 
     try:
-        # 【テスト用ダミー】本来はAmazon SP-APIから取得する「最安値(良以上)＋配送料」
-        # 現在は確認のため「仕入値 ＋ 2000円」をAmazon合計価格と仮定します
+        # 【テスト用】現在は一律で「仕入値 ＋ 2000円」をAmazon合計価格と仮定
         amazon_total_price = buy_price + 2000 
 
-        # 💡 教えていただいた計算式：
-        # Amazon合計 - (15%手数料) - (配送料等155円) = 仕入れ価格 + 利益(X)
-        # つまり 利益(X) = (Amazon合計 * 0.85) - 155 - 仕入れ価格
+        # 💡 教えていただいた計算式を正確に反映
+        # 利益 $X = (Amazon合計 \times 0.85) - 155 - 仕入れ価格$
         profit = int((amazon_total_price * 0.85) - 155 - buy_price)
 
-        # 💡 テスト用：利益が1円以上ならアクションを実行（is_target: true）
+        # 💡 テスト用：利益が1円以上なら「お宝」判定（is_target: true）
         is_target = profit >= 1
 
         return jsonify({
             "status": "success",
             "is_target": is_target,
             "profit": profit,
-            "amazon_price": amazon_total_price,
+            "amazon_total": amazon_total_price,
             "buy_price": buy_price
         })
     except Exception as e:
